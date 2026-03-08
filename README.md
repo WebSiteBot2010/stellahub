@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sollary Community Website
 
-## Getting Started
+Sito web della community Sollary — Next.js 14 + Vercel.
 
-First, run the development server:
+## Stack
 
+- **Framework**: Next.js 14 (App Router)
+- **Auth**: NextAuth.js v4 (Discord OAuth2)
+- **Styling**: Tailwind CSS
+- **Deploy**: Vercel
+- **Icons**: Lucide React
+
+## Setup Locale
+
+### 1. Installa dipendenze
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Configura variabili d'ambiente
+Copia `.env.local.example` in `.env.local` e compila:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.local.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Variabili necessarie:
+- `NEXTAUTH_SECRET` — genera con `openssl rand -base64 32`
+- `DISCORD_CLIENT_ID` e `DISCORD_CLIENT_SECRET` — da [Discord Developer Portal](https://discord.com/developers/applications)
+- `DISCORD_BOT_TOKEN` — token del tuo bot Discord
+- `DISCORD_GUILD_ID` — ID del tuo server Discord
+- `DISCORD_VOTER_ROLE_ID` — ID del ruolo Voter
+- Tutti i `DISCORD_WEBHOOK_*` — webhook dei canali Discord
 
-## Learn More
+### 3. Configura Discord OAuth2
+Nel Discord Developer Portal:
+1. Crea una nuova applicazione
+2. Vai su **OAuth2 → General**
+3. Aggiungi redirect URL: `http://localhost:3000/api/auth/callback/discord`
+4. Per produzione: `https://tuo-dominio.vercel.app/api/auth/callback/discord`
 
-To learn more about Next.js, take a look at the following resources:
+### 4. Avvia il server
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy su Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Metodo 1: Vercel CLI
+```bash
+npm i -g vercel
+vercel
+```
 
-## Deploy on Vercel
+### Metodo 2: GitHub + Vercel Dashboard
+1. Pusha il codice su GitHub
+2. Importa su [vercel.com](https://vercel.com)
+3. Aggiungi tutte le variabili d'ambiente dal dashboard Vercel
+4. Deploy automatico!
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Variabili d'ambiente su Vercel
+Nel dashboard Vercel → Project → Settings → Environment Variables:
+- Aggiungi tutte le variabili da `.env.local.example`
+- `NEXTAUTH_URL` deve essere `https://tuo-dominio.vercel.app`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Struttura Pagine
+
+| URL | Descrizione | Auth Required |
+|-----|-------------|---------------|
+| `/` | Homepage | No |
+| `/vote` | Votazione server | ✅ |
+| `/unban` | Richiesta unban | ✅ |
+| `/candidature` | Candidature staff | ✅ |
+| `/regole` | Regolamento | ✅ |
+| `/ruoli` | Ruoli server | ✅ |
+| `/users/level` | Classifica utenti | ✅ |
+| `/faq` | FAQ | ✅ |
+| `/sponsor` | Partnership | No (form pubblico) |
+| `/wiki` | Wiki community | ✅ |
+
+## API Routes
+
+| Endpoint | Metodo | Descrizione |
+|----------|--------|-------------|
+| `/api/auth/[...nextauth]` | GET/POST | NextAuth Discord OAuth |
+| `/api/vote` | GET/POST | Voto server + webhook |
+| `/api/unban` | GET/POST | Check ban + richiesta unban |
+| `/api/candidature` | POST | Invio candidatura |
+| `/api/partnership` | POST | Richiesta partnership |
+
+## Note Produzione
+
+- **Database voti**: Attualmente in-memory. Per produzione usa [Upstash Redis](https://upstash.com) (gratuito su Vercel)
+- **Database users**: Collega il bot Discord per dati reali
+- **Rate limiting**: Aggiungi [Upstash Ratelimit](https://github.com/upstash/ratelimit) per sicurezza
